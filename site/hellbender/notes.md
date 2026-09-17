@@ -3,14 +3,21 @@
 Notes for the CPG group's installation. Nothing here is required by
 the suite; see `../../README.md` for the portable instructions.
 
+**Who uses this installation.** Hellbender is where the tools are
+*developed* and where the instructor runs them. **The class does not
+run here**: students use another computer, set up from the README's
+quick start. `$CPG_SHARE` is readable by the research group only, so
+the "release suite" below serves group members who want the tools
+without a working copy, and nobody else. It is optional.
+
 ## Where things are
 
 | What | Path |
 | --- | --- |
 | Shared group area | `$CPG_SHARE` = `/cluster/VAST/rulisp-lab/cpg` |
 | The environment | `$CPG_SHARE/virtual_envs/physdemo` |
-| Release suite (students) | `$CPG_SHARE/physdemo` |
-| Dev suite (instructor) | `$HOME/physdemo-dev` |
+| Release suite (group members) | `$CPG_SHARE/physdemo` |
+| Dev suite (the developer) | `$HOME/physdemo-dev` |
 | Modulefiles | `$CPG_SHARE/modulefiles/cpg_physdemo/` |
 
 The environment is built on the group's own `cpg10` conda
@@ -21,22 +28,22 @@ removed by a system update.
 
 ## The rule for the release suite
 
-Home directories on this cluster are mode 700, so **nothing a student
-runs may be a link into anyone's home**. The release suite is
+Home directories on this cluster are mode 700, so **nothing another
+person runs may be a link into anyone's home**. The release suite is
 therefore installed from checkouts that live in the shared area —
 this repository and every tool — never from a working copy:
 
 ```bash
 mkdir -p $CPG_SHARE/physdemo/src && cd $CPG_SHARE/physdemo/src
-git clone git@github.com:UMKC-CPG/physdemo.git
-git clone git@github.com:UMKC-CPG/rigid_body.git && \
-    git -C rigid_body checkout v1.0-classroom
-# ... one clone per tool, each at a release tag
+git clone https://github.com/UMKC-CPG/physdemo.git
+git clone https://github.com/UMKC-CPG/rigid_body.git
+git clone https://github.com/UMKC-CPG/scattering.git
+# ... one clone per tool; check out a release tag where one exists
 ```
 
 and `install.sh` / `install_tool.sh` are run from *those* copies.
-Updating a tool for students is then `git fetch && git checkout
-<tag>` in its checkout; no link changes. The dev suite has no such
+Updating a tool there is then `git pull` (or `git checkout <tag>`) in
+its checkout; no link changes. The dev suite has no such
 constraint and links straight into `~/CPG/cpg-repo/`.
 
 ## Installing here
@@ -51,15 +58,15 @@ PY=$CPG_SHARE/mamba/envs/cpg10/bin/python
              --lmod-out $CPG_SHARE/modulefiles/cpg_physdemo/dev.lua
 ```
 
-Then `install_tool.sh` once per tool per suite: tagged checkouts under
-`$CPG_SHARE/physdemo/tools/` for the release suite, working copies in
+Then `install_tool.sh` once per tool per suite: the checkouts under
+`$CPG_SHARE/physdemo/src/` for the release suite, working copies in
 `~/CPG/cpg-repo/` for the dev suite.
 
 ## Turning it on
 
 ```bash
-alias sdemo='source $HOME/physdemo-dev/activate.sh'     # instructor
-module load cpg_physdemo/release                        # students
+alias sdemo='source $HOME/physdemo-dev/activate.sh'     # developer
+module load cpg_physdemo/release                        # group members
 ```
 
 `module use $CPG_SHARE/modulefiles` must be in effect for the second.
@@ -83,8 +90,8 @@ module load cpg_physdemo/release                        # students
   Every path is **software rendering**: no GPU is involved, so the
   frame rate is set by CPU fill rate and, over X forwarding, by
   shipping each uncompressed frame across the network. **Recommend
-  the Open OnDemand desktop to students**: it is the fastest, it
-  does not depend on the student's own X server or connection, and
+  the Open OnDemand desktop to anyone running here**: it is the
+  fastest, it does not depend on one's own X server or connection, and
   it works from Windows and ChromeOS without extra software. X
   forwarding works and is a fine fallback. A smaller window helps
   in every case, since the cost is per pixel.
@@ -106,8 +113,8 @@ module load cpg_physdemo/release                        # students
   (Mesa) and tries only `libGLX_indirect.so.0`, absent here; a
   forwarded X server does not announce a vendor, a local one does.
   `physdemo-check` warns about this before drawing. Workaround:
-  `env -u LD_LIBRARY_PATH scsim ...`. Students' shells do not carry
-  that alias. Confirmed the same day: with `env -u LD_LIBRARY_PATH`
+  `env -u LD_LIBRARY_PATH scsim ...`. Other users' shells do not
+  carry that alias. Confirmed the same day: with `env -u LD_LIBRARY_PATH`
   the window opened in the shell that had crashed. Fixed in general
   by the suite's launcher (README, "The launcher"), which sets that
   directory aside for each command it starts; verified here by
