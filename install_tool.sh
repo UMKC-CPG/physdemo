@@ -98,4 +98,20 @@ for script in "$scripts_dir"/*.py; do
     linked=$((linked + 1))
 done
 
+# Byte-compile the tool where this user can write to it. People who
+#   run a shared suite usually cannot write in it, so Python could not
+#   keep its compiled files and would compile the tool again at every
+#   launch. Harmless for a working copy, and skipped without complaint
+#   where the checkout is not writable or no python3 is on the PATH.
+source_dir="$(dirname "$scripts_dir")"
+if [ "$linked" -gt 0 ] && [ -w "$source_dir" ]; then
+    suite_python="$(sed -n 's/^VIRTUAL_ENV="\(.*\)"; export.*/\1/p' \
+                        "$prefix/activate.sh" | head -1)/bin/python3"
+    [ -x "$suite_python" ] || suite_python="$(command -v python3 || true)"
+    if [ -n "$suite_python" ]; then
+        "$suite_python" -m compileall -q "$source_dir" >/dev/null 2>&1 \
+            && echo "  byte-compiled $source_dir"
+    fi
+fi
+
 echo "$linked command(s) linked from $tool_name into $prefix/bin"
