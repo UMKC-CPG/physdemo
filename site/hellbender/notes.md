@@ -19,6 +19,26 @@ Python: a venv records the absolute path of the interpreter that made
 it, and an interpreter the group does not control can be moved or
 removed by a system update.
 
+## The rule for the release suite
+
+Home directories on this cluster are mode 700, so **nothing a student
+runs may be a link into anyone's home**. The release suite is
+therefore installed from checkouts that live in the shared area —
+this repository and every tool — never from a working copy:
+
+```bash
+mkdir -p $CPG_SHARE/physdemo/src && cd $CPG_SHARE/physdemo/src
+git clone git@github.com:UMKC-CPG/physdemo.git
+git clone git@github.com:UMKC-CPG/rigid_body.git && \
+    git -C rigid_body checkout v1.0-classroom
+# ... one clone per tool, each at a release tag
+```
+
+and `install.sh` / `install_tool.sh` are run from *those* copies.
+Updating a tool for students is then `git fetch && git checkout
+<tag>` in its checkout; no link changes. The dev suite has no such
+constraint and links straight into `~/CPG/cpg-repo/`.
+
 ## Installing here
 
 ```bash
