@@ -139,6 +139,9 @@ LISTER
 chmod +x "$prefix/bin/physdemo"
 touch "$prefix/tools.list"
 
+# The environment and rendering check, linked like any other tool.
+ln -sfn "$script_dir/tools/physdemo_check.py" "$prefix/bin/physdemo-check"
+
 if [ -n "$lmod_out" ]; then
     mkdir -p "$(dirname "$lmod_out")"
     sed -e "s|@PREFIX@|$prefix|g" -e "s|@VENV@|$venv_dir|g" \

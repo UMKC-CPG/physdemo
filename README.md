@@ -81,7 +81,13 @@ Two are worth knowing:
   whose links point at working copies (for the instructor) are two
   `install.sh` runs with different `--prefix` and the same `--venv`.
 
-`physdemo` (the command) lists what an activated suite provides.
+`physdemo` (the command) lists what an activated suite provides, and
+`physdemo-check` answers the first question on any new machine: are
+the packages here, and can VTK draw? Run it bare for an offscreen
+test that needs no display, and with `--onscreen` to open a real
+window and measure its frame rate. Both verify the pixels, and both
+name the OpenGL renderer in use (`llvmpipe` is software rendering,
+which is adequate; a GPU name is hardware).
 
 ## What a tool must do to join
 
@@ -132,6 +138,7 @@ requirements.in    Direct dependencies, loosely bounded
 requirements.txt   The pinned, tested set
 install.sh         Build or adopt an environment; write activate.sh
 install_tool.sh    Link one tool's entry points into a suite's bin/
+tools/             physdemo-check: environment and rendering test
 extras/lmod/       Optional Lmod modulefile template
 site/              Notes for particular computers; never required
 ```
