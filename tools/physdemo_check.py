@@ -61,6 +61,56 @@ def pinned_versions():
     return {}
 
 
+def report_shadowing_graphics_libraries():
+    """Report on private OpenGL loaders named by LD_LIBRARY_PATH,
+    BEFORE any drawing, because the symptom is a crash with no
+    explanation.
+
+    VTK's wheel does not link libGL; it opens it by name when a window
+    is created, so LD_LIBRARY_PATH decides which copy is used. A conda
+    environment's lib/ directory on that path supplies conda's libGL
+    and libGLX in place of the system's. Conda's libGLX lacks the
+    fallback to the system's driver that Linux distributions patch in,
+    so with an X server that does not announce its OpenGL vendor (a
+    forwarded one: `ssh -X`, a batch system's X11 option) it finds no
+    driver at all. VTK then reports "Could not find a decent config"
+    and the program dies with a segmentation fault. A local X server
+    (a remote desktop session) announces its vendor, which is why the
+    same shell can work there.
+
+    The suite's launcher (libexec/physdemo-launch) sets such
+    directories aside for each command it starts and names them in
+    PHYSDEMO_SET_ASIDE; that is reported as a note. A warning is
+    printed only for a directory that is STILL on the path, which
+    happens when this script is run directly rather than by name, or
+    when PHYSDEMO_KEEP_LOADER_PATH is set."""
+    if not sys.platform.startswith('linux'):
+        return
+    set_aside = os.environ.get('PHYSDEMO_SET_ASIDE', '')
+    if set_aside:
+        print('note: the launcher set aside, for this command only, '
+              'conda\'s own OpenGL loader:')
+        for directory in set_aside.split(':'):
+            print(f'    {directory}')
+    loaders = ('libGL.so.1', 'libGLX.so.0')
+    shadowing = [directory for directory
+                 in os.environ.get('LD_LIBRARY_PATH', '').split(':')
+                 if directory and any(
+                     os.path.exists(os.path.join(directory, name))
+                     for name in loaders)]
+    if not shadowing:
+        return
+    print('WARNING: LD_LIBRARY_PATH puts a private OpenGL loader ahead '
+          'of the system\'s:')
+    for directory in shadowing:
+        print(f'    {directory}')
+    print('  Over a forwarded X display this can end in "Could not find '
+          'a decent\n  config" and a segmentation fault. The suite\'s '
+          'commands, run by name,\n  set a conda environment\'s lib/ '
+          'aside by themselves; for anything else:\n'
+          '      env -u LD_LIBRARY_PATH <command> ...')
+
+
 def report_environment():
     """Print the interpreter, the platform, the display variables, and
     each direct package's version against its pin. Returns True if
@@ -70,6 +120,7 @@ def report_environment():
     for name in ('DISPLAY', 'WAYLAND_DISPLAY', 'VIRTUAL_ENV',
                  'PHYSDEMO_HOME', 'VTK_DEFAULT_OPENGL_WINDOW'):
         print(f'{name:<26} {os.environ.get(name, "(unset)")}')
+    report_shadowing_graphics_libraries()
     pins = pinned_versions()
     all_present = True
     print('packages:')

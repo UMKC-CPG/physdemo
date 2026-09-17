@@ -95,6 +95,25 @@ module load cpg_physdemo/release                        # students
   `xauth list`; run it before an on-screen tool in such a shell.
   Offscreen drawing is unaffected (the tools choose EGL by what was
   asked for, not by `DISPLAY`).
+- **A conda `lib/` on `LD_LIBRARY_PATH` breaks forwarded X.** Seen
+  2026-09-17: in a shell where the group's `cpg` alias had run (it
+  exports `LD_LIBRARY_PATH=<cpg env>/lib`, and `salloc` passes that
+  into the job), `scsim` under `salloc --x11` died with `Could not
+  find a decent config` and a segmentation fault, while the same
+  shell worked on an OnDemand desktop. Cause, from inspection: VTK
+  opens `libGL` by name at window creation, so it got conda's
+  `libGLX`, which lacks Red Hat's fallback to `libGLX_system.so.0`
+  (Mesa) and tries only `libGLX_indirect.so.0`, absent here; a
+  forwarded X server does not announce a vendor, a local one does.
+  `physdemo-check` warns about this before drawing. Workaround:
+  `env -u LD_LIBRARY_PATH scsim ...`. Students' shells do not carry
+  that alias. Confirmed the same day: with `env -u LD_LIBRARY_PATH`
+  the window opened in the shell that had crashed. Fixed in general
+  by the suite's launcher (README, "The launcher"), which sets that
+  directory aside for each command it starts; verified here by
+  listing the libraries an on-screen VTK window maps, which are
+  conda's when the script is run directly and `/usr/lib64`'s when it
+  is run by name.
 - VTK's import takes tens of seconds on the shared filesystem when it
   is busy; this is the filesystem, not the tools.
 

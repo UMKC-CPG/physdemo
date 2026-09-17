@@ -13,7 +13,8 @@
 #   ./install.sh --prefix DIR [--venv DIR] [--python EXE]
 #                [--no-packages] [--lmod-out FILE]
 #
-#   --prefix DIR     The suite root. Receives bin/ and activate.sh.
+#   --prefix DIR     The suite root. Receives bin/, links/, libexec/,
+#                    and activate.sh.
 #                    Default: $HOME/physdemo
 #   --venv DIR       The Python environment to use. If DIR does not
 #                    exist it is created as a venv; if it exists (a venv
@@ -51,7 +52,7 @@ while [ $# -gt 0 ]; do
         --python)      python_exe="$2"; shift 2 ;;
         --no-packages) install_packages=0; shift ;;
         --lmod-out)    lmod_out="$2"; shift 2 ;;
-        -h|--help)     sed -n '3,33p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help)     sed -n '3,34p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) echo "install.sh: unknown argument: $1" >&2; exit 2 ;;
     esac
 done
@@ -139,8 +140,18 @@ LISTER
 chmod +x "$prefix/bin/physdemo"
 touch "$prefix/tools.list"
 
-# The environment and rendering check, linked like any other tool.
-ln -sfn "$script_dir/tools/physdemo_check.py" "$prefix/bin/physdemo-check"
+# The launcher that every command in bin/ links to (its header comment
+#   says why commands are not plain links to the tools). It is COPIED,
+#   so that a suite does not depend on this checkout staying readable.
+mkdir -p "$prefix/libexec" "$prefix/links"
+cp "$script_dir/tools/physdemo_launch.sh" "$prefix/libexec/physdemo-launch"
+chmod +x "$prefix/libexec/physdemo-launch"
+
+# The environment and rendering check, installed like any other tool:
+#   links/<name> names the real script, bin/<name> names the launcher.
+ln -sfn "$script_dir/tools/physdemo_check.py" \
+    "$prefix/links/physdemo-check"
+ln -sfn ../libexec/physdemo-launch "$prefix/bin/physdemo-check"
 
 if [ -n "$lmod_out" ]; then
     mkdir -p "$(dirname "$lmod_out")"

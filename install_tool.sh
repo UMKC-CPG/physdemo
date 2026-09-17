@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
 # install_tool.sh -- make one demonstration tool's commands available
-#   in a physdemo suite by linking its entry-point scripts into the
-#   suite's bin/ directory, without their ".py" suffix.
+#   in a physdemo suite, named without their ".py" suffix. For each
+#   entry point it makes two links: links/<name>, which names the
+#   tool's script, and bin/<name>, which names the suite's launcher
+#   (libexec/physdemo-launch; its header comment says what it is for).
 #
 # A tool is a repository laid out as the group's project template has
 #   it: executable entry points in src/scripts/<name>.py, each beginning
@@ -36,7 +38,7 @@ while [ $# -gt 0 ]; do
     case "$1" in
         --prefix)  prefix="$2"; shift 2 ;;
         --force)   force=1; shift ;;
-        -h|--help) sed -n '3,27p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '3,29p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         -*) echo "install_tool.sh: unknown option: $1" >&2; exit 2 ;;
         *)  tool_repo="$1"; shift ;;
     esac
@@ -46,6 +48,10 @@ done
                          exit 2; }
 [ -d "$prefix/bin" ] || { echo "install_tool.sh: $prefix is not a suite" \
                                "(run install.sh first)" >&2; exit 1; }
+[ -x "$prefix/libexec/physdemo-launch" ] \
+    || { echo "install_tool.sh: $prefix has no launcher; re-run" \
+              "install.sh on it first (it keeps the installed tools)" >&2
+         exit 1; }
 scripts_dir="$(cd "$tool_repo/src/scripts" 2>/dev/null && pwd -P)" \
     || { echo "install_tool.sh: $tool_repo has no src/scripts/" >&2
          exit 1; }
@@ -66,14 +72,22 @@ for script in "$scripts_dir"/*.py; do
         echo "  skip $base: not executable (chmod +x $script)"
         continue
     fi
-    target="$prefix/bin/$base"
-    if [ -L "$target" ] && [ "$(readlink "$target")" != "$script" ] \
+    target="$prefix/links/$base"
+    # Where the command points now: links/<name>, or, in a suite made
+    #   before the launcher existed, bin/<name> itself.
+    current=""
+    if [ -L "$target" ]; then
+        current="$(readlink "$target")"
+    elif [ -L "$prefix/bin/$base" ]; then
+        current="$(readlink "$prefix/bin/$base")"
+    fi
+    if [ -n "$current" ] && [ "$current" != "$script" ] \
             && [ "$force" -eq 0 ]; then
-        echo "  skip $base: already links to $(readlink "$target")" \
-             "(use --force)"
+        echo "  skip $base: already links to $current (use --force)"
         continue
     fi
     ln -sfn "$script" "$target"
+    ln -sfn ../libexec/physdemo-launch "$prefix/bin/$base"
     echo "  $base -> $script"
     # Keep one line per command in the suite's list.
     grep -v "^$base " "$prefix/tools.list" > "$prefix/tools.list.tmp" \

@@ -33,10 +33,13 @@ Three thin layers, none of them specific to any one computer:
    tool needs (`requirements.txt`: NumPy, SciPy, vedo/VTK, h5py, pint,
    matplotlib, pytest). No tool is installed *into* it; each tool's
    entry-point script finds its own library beside itself.
-2. **One `bin/` of symbolic links** to each tool's entry points, named
-   without the `.py`. The entry points stay what they are — executable
-   Python scripts beginning `#!/usr/bin/env python3` — so they can be
-   read, edited, and tested as ordinary files.
+2. **One `bin/` of commands**, one per entry point of each tool, named
+   without the `.py`. Nothing is copied: `links/<name>` is a symbolic
+   link to the tool's script, and `bin/<name>` is a symbolic link to a
+   small launcher that starts it (see "The launcher" below). The entry
+   points stay what they are — executable Python scripts beginning
+   `#!/usr/bin/env python3` — so they can be read, edited, and tested
+   as ordinary files.
 3. **One `activate.sh`** that puts the environment's `bin/` and the
    suite's `bin/` on the `PATH`. Plain bash or zsh; Linux or macOS.
 
@@ -107,14 +110,44 @@ The group's project template produces tools that already satisfy this:
 
 ## Rendering without a display
 
-The tools draw with VTK. On a Linux machine with no X display (a
-cluster node, a test runner) VTK's default window class cannot open;
-setting `VTK_DEFAULT_OPENGL_WINDOW=vtkEGLRenderWindow` gives a working
-offscreen context where EGL is present. Tools set this themselves
-**only on Linux and only when `DISPLAY` is unset**; macOS and Windows
-need nothing. Whether a given machine can render on screen — over SSH
-with X forwarding, on a login node, on a laptop — is a property of
-that machine and is recorded per site under `site/`.
+The tools draw with VTK. On a Linux machine, VTK's default (X) window
+class cannot open without a live X display, and it *hangs* on a
+`DISPLAY` that is set but dead, which is common in long-lived cluster
+shells. Setting `VTK_DEFAULT_OPENGL_WINDOW=vtkEGLRenderWindow` before
+VTK is imported gives a working offscreen context where EGL is
+present. So the rule every tool follows is keyed on what was asked
+for, not on `DISPLAY`: **on Linux, a request to draw offscreen selects
+EGL, whatever `DISPLAY` says; a request for a window leaves VTK
+alone; macOS and Windows need nothing and are left alone.** An
+explicit `VTK_DEFAULT_OPENGL_WINDOW` always wins. Whether a given
+machine can render on screen — over SSH with X forwarding, on a login
+node, on a laptop — is a property of that machine and is recorded per
+site under `site/`.
+
+## The launcher
+
+`bin/<name>` runs `libexec/physdemo-launch`, which starts
+`links/<name>` after one correction to the environment of that
+command only. On Linux, VTK opens the OpenGL library by name when a
+window is created, so `LD_LIBRARY_PATH` decides which copy it gets. A
+conda environment's `lib/` on that path supplies conda's `libGL` and
+`libGLX`, and conda's `libGLX` lacks the fallback to the system's
+driver that Linux distributions patch in. With an X server that does
+not announce its OpenGL vendor — a forwarded one — it finds no driver:
+VTK prints `Could not find a decent config` and the tool dies with a
+segmentation fault, while the same shell works on a remote desktop.
+
+The launcher therefore sets aside, for the command it starts, each
+`LD_LIBRARY_PATH` directory that both holds `libGL.so.1` or
+`libGLX.so.0` and is a conda environment's `lib/` (its parent holds
+`conda-meta/`). It says so in one line on standard error. It never
+changes the calling shell, where that path may be deliberate, and it
+leaves alone a directory holding a site's own OpenGL build. Because it
+acts at launch, the order in which a user activated things does not
+matter. `PHYSDEMO_KEEP_LOADER_PATH=1` turns it off and
+`PHYSDEMO_QUIET=1` silences the notice; `physdemo-check` reports what
+was set aside, and warns when a tool run *without* the launcher would
+be exposed.
 
 ## Updating the pinned packages
 
@@ -137,8 +170,9 @@ LICENSE            GPL-3.0
 requirements.in    Direct dependencies, loosely bounded
 requirements.txt   The pinned, tested set
 install.sh         Build or adopt an environment; write activate.sh
-install_tool.sh    Link one tool's entry points into a suite's bin/
-tools/             physdemo-check: environment and rendering test
+install_tool.sh    Link one tool's entry points into a suite
+tools/             physdemo-check: environment and rendering test;
+                   physdemo_launch.sh: the launcher behind bin/
 extras/lmod/       Optional Lmod modulefile template
 site/              Notes for particular computers; never required
 ```
