@@ -116,9 +116,18 @@ See the header of `requirements.in`: install from it into a fresh
 environment, run every tool's tests, write `pip freeze` back to
 `requirements.txt`, and commit the two together with the reason.
 
+## License and attribution
+
+GPL-3.0-or-later; see `LICENSE`. The tools this suite gathers are
+separate repositories with their own licenses and citations, and
+each one's README says how to cite it. If you build on this suite or
+on a tool — by hand or with an AI assistant — carry the attribution
+forward.
+
 ## Layout
 
 ```
+LICENSE            GPL-3.0
 requirements.in    Direct dependencies, loosely bounded
 requirements.txt   The pinned, tested set
 install.sh         Build or adopt an environment; write activate.sh
