@@ -56,22 +56,50 @@ share. Links get the same convenience with none of that.
 
 ## Installing
 
-Requires bash, Python 3.10 or later, and pip.
+**What the computer needs:** `git`, `bash`, and Python 3.10 or later
+with `pip` and `venv`; about 1 GB of disk for the packages; and a
+working OpenGL, which every desktop has (on a Linux server, Mesa's
+software renderer is enough, and no GPU is needed). Nothing else:
+no conda, no modules, no administrator rights. The pinned package
+set was built and tested with Python 3.10 on Linux; macOS should
+work as it stands and Windows through WSL 2, but neither has been
+tried yet, and a much newer Python may find that a pinned version
+has no wheel for it (see "Updating the pinned packages").
 
 ```bash
-git clone <this repository> physdemo-src && cd physdemo-src
+# 1. Get the suite and the tools. Any directory will do; the clones
+#    must stay where they are, because the suite links to them.
+mkdir -p ~/physdemo-src && cd ~/physdemo-src
+git clone https://github.com/UMKC-CPG/physdemo.git
+git clone https://github.com/UMKC-CPG/scattering.git
+git clone https://github.com/UMKC-CPG/rigid_body.git
 
-# Build a suite with its own venv under ~/physdemo:
-./install.sh --prefix ~/physdemo
+# 2. Build a suite under ~/physdemo: a venv with the pinned packages
+#    (the one slow step), activate.sh, and the physdemo commands.
+physdemo/install.sh --prefix ~/physdemo
 
-# Add tools (clone each one wherever you like first):
-./install_tool.sh --prefix ~/physdemo /path/to/rigid_body
-./install_tool.sh --prefix ~/physdemo /path/to/scattering
+# 3. Add each tool's commands to it.
+physdemo/install_tool.sh --prefix ~/physdemo scattering
+physdemo/install_tool.sh --prefix ~/physdemo rigid_body
 
-# Turn it on; make it one word:
+# 4. Turn it on, and make that one word for next time.
 source ~/physdemo/activate.sh
 echo "alias sdemo='source ~/physdemo/activate.sh'" >> ~/.bashrc
+
+# 5. Check the machine, then run something.
+physdemo-check                 # packages present? can VTK draw?
+physdemo-check --onscreen      # opens a window; reports frame rate
+scsim ~/physdemo-src/scattering/runs/rutherford.toml
+rbsim ~/physdemo-src/rigid_body/scenarios/dzhanibekov.toml
 ```
+
+From then on a session is `sdemo` and a command name, from any
+directory. **Updating** a tool is `git pull` in its clone; nothing is
+re-installed, because the suite links to the clone. Re-run
+`install_tool.sh` only when a tool gains a new command, and
+`install.sh` (which keeps the installed tools) when this repository's
+launcher or `requirements.txt` changes. **Removing** everything is
+deleting `~/physdemo`, the clones, and the alias.
 
 `./install.sh --help` and `./install_tool.sh --help` list every option.
 Two are worth knowing:
