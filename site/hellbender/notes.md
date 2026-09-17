@@ -70,12 +70,31 @@ module load cpg_physdemo/release                        # students
   compute nodes with `DISPLAY` unset; the tools select VTK's EGL
   window class themselves. OSMesa is not installed. `xvfb-run` is
   available as a fallback.
-- **On screen**: needs an X display. *To be verified and recorded
-  here:* `ssh -X` to a login node; `salloc -p interactive --x11` on an
-  interactive node; Open OnDemand desktop. Record which work, the
-  frame rate of `dev/spikes/render_budget.py` from the scattering
-  tool on each, and any `LIBGL_*` or VirtualGL setting that was
-  needed.
+- **On screen**: needs an X display. Measured 2026-09-17 with
+  `physdemo-check --onscreen` (4 s, 960x720), all three PASS with
+  pixels verified:
+
+  | How the display is reached | Renderer | Frame rate |
+  | --- | --- | --- |
+  | Open OnDemand desktop | llvmpipe (LLVM 17.0.6) | 9.7 fps |
+  | `ssh -X` to a login node | llvmpipe (LLVM 17.0.6) | 6.2 fps |
+  | `salloc -p interactive --x11` | llvmpipe (LLVM 17.0.6) | 4.4 fps |
+
+  Every path is **software rendering**: no GPU is involved, so the
+  frame rate is set by CPU fill rate and, over X forwarding, by
+  shipping each uncompressed frame across the network. **Recommend
+  the Open OnDemand desktop to students**: it is the fastest, it
+  does not depend on the student's own X server or connection, and
+  it works from Windows and ChromeOS without extra software. X
+  forwarding works and is a fine fallback. A smaller window helps
+  in every case, since the cost is per pixel.
+- **A stale `DISPLAY`** is common here: a shell inside `tmux` or a
+  long-lived session keeps `DISPLAY=localhost:NN.0` after the SSH
+  connection that forwarded it has gone. On-screen drawing then hangs
+  or fails. The group's `rx` shell function re-derives `DISPLAY` from
+  `xauth list`; run it before an on-screen tool in such a shell.
+  Offscreen drawing is unaffected (the tools choose EGL by what was
+  asked for, not by `DISPLAY`).
 - VTK's import takes tens of seconds on the shared filesystem when it
   is busy; this is the filesystem, not the tools.
 
