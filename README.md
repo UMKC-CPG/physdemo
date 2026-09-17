@@ -13,12 +13,18 @@ scsim runs/rutherford.toml     # run a tool by name, from anywhere
 
 and never an absolute path.
 
+**New here?** [Installing](#installing) is a five-step quick start
+for any computer with `git`, `bash`, and Python 3.10 or later.
+
 ## The tools
 
 | Command | Tool | Subject |
 | --- | --- | --- |
-| `rbsim`, `rbbatch` | `rigid_body` | Rigid-body rotation, Poinsot |
-| `scsim`, `scbatch` | `scattering` | Classical scattering, inversion |
+| `rbsim`, `rbbatch` | [`rigid_body`][rb] | Rigid-body rotation, Poinsot |
+| `scsim` (`scbatch` planned) | [`scattering`][sc] | Classical scattering |
+
+[rb]: https://github.com/UMKC-CPG/rigid_body
+[sc]: https://github.com/UMKC-CPG/scattering
 
 Planned: Euler angles; pseudo-forces in a rotating frame. The suite is
 not limited to mechanics — solid state, E&M, quantum, and thermal
