@@ -1,0 +1,17 @@
+# physdemo: the DIRECT dependencies of the demonstration tools, with
+# loose bounds. This file says what the suite needs; requirements.txt
+# beside it pins the exact set that has been tested together. To move
+# the pins forward, install from this file into a fresh environment,
+# run every tool's test suite, and write the result of `pip freeze`
+# back into requirements.txt.
+
+numpy>=2.0
+scipy>=1.13
+matplotlib>=3.8
+vedo>=2025.5        # interactive 3D scenes; draws through VTK
+vtk>=9.4            # the rendering engine beneath vedo
+h5py>=3.10          # HDF5 output of the batch tiers
+pint>=0.24          # physical units at each tool's input boundary
+tomli>=2.0; python_version < "3.11"     # TOML reading before 3.11
+tomli_w>=1.0        # TOML writing (resolved run files)
+pytest>=8.0         # every tool ships a test suite

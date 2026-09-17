@@ -1,0 +1,5 @@
+# A suite installed inside this repository for testing, never tracked.
+_suite/
+venv/
+*.pyc
+__pycache__/

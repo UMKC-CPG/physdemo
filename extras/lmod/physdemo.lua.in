@@ -1,0 +1,28 @@
+-- ---------------------------------------------------------------------
+-- physdemo: interactive physics demonstration tools for teaching.
+--
+-- OPTIONAL. This modulefile does exactly what the suite's activate.sh
+--   does -- set VIRTUAL_ENV and prepend two directories to PATH -- for
+--   sites whose users expect `module load`. It is generated from
+--   extras/lmod/physdemo.lua.in by `install.sh --lmod-out FILE`; edit
+--   the template, not the generated file. Nothing else in the suite
+--   depends on Lmod.
+-- ---------------------------------------------------------------------
+help([[
+physdemo: interactive physics demonstration tools.
+After loading, run `physdemo` to list the tools this suite provides,
+and any tool by name, for example:
+   scsim runs/rutherford.toml
+   rbsim
+]])
+whatis("Name        : physdemo")
+whatis("Description : Interactive physics demonstration tools")
+
+-- Two suites (a release one for students, a dev one for an instructor)
+--   must not be loaded together.
+family("physdemo")
+
+setenv("PHYSDEMO_HOME", "@PREFIX@")
+setenv("VIRTUAL_ENV", "@VENV@")
+prepend_path("PATH", "@VENV@/bin")
+prepend_path("PATH", "@PREFIX@/bin")
