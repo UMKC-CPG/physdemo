@@ -136,11 +136,22 @@ The group's project template produces tools that already satisfy this:
   symlinks resolved** — `Path(__file__).resolve()` or
   `os.path.realpath(__file__)`, never `os.path.abspath` — because it is
   run through a link.
-- Defaults in `src/scripts/<name>rc.py`, looked up in the working
-  directory, then `$<TOOL>_RC`, then beside the script, so that no
-  environment variable has to be set for a tool to run.
+- The tool's shipped defaults (`<name>rc.py`) are found without any
+  environment variable being set: in the working directory, then
+  `$<TOOL>_RC`, then a copy the tool carries with it (inside its
+  package, or beside the script).
 - No dependency outside `requirements.in`. A tool that needs a new
   package proposes it here first, so that every tool keeps working.
+
+A tool may **also** be `pip`-installable, for a student's own laptop
+where this suite's shell scripts are the wrong instrument (Windows, no
+shared directory). `rigid_body` and `scattering` both are: their
+command bodies live inside their packages, `src/scripts/` holds thin
+fronts that the suite links, and `pyproject.toml` declares the same
+dependencies with bounds no tighter than `requirements.in`. The two
+routes run the same code, and either tool's README shows the four-line
+laptop install. This suite stays the right answer for a shared
+computer, where nothing should be installed per user.
 
 ## Rendering without a display
 
